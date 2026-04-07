@@ -1,12 +1,13 @@
-# Smart Gas Leakage Detection System (ESP32 + MQ-2)
+# Smart Gas Leakage Detection System (ESP32 + MQ-2 + Telegram Bot)
 
-## 📌 Overview
+## Overview
 
 This project is a **smart gas leakage detection system** built using the ESP32 and MQ-2 sensor.
 It monitors gas concentration in real time and provides:
 
 * Local alerts (LED + Buzzer)
-* Interaction (user can control system via chat Blynk apps)
+* Remote alerts via Telegram Bot
+* Two-way interaction (user can control system via chat commands)
 
 ---
 
@@ -16,6 +17,8 @@ It monitors gas concentration in real time and provides:
 * MQ-2 Gas Sensor
 * Buzzer Module
 * LED + Resistor (220Ω)
+* Power via USB
+
 ---
 
 ## Pin Configuration
@@ -31,7 +34,8 @@ It monitors gas concentration in real time and provides:
 ## Software & Libraries
 
 * WiFi.h
-* BlynkSimpleEsp32.h
+* WiFiClientSecure.h
+* UniversalTelegramBot.h
 * ArduinoJson.h
 
 ---
@@ -49,6 +53,26 @@ System automatically calibrates baseline value in clean air at startup.
 ### Smart Alert System
 
 * LED + Buzzer activate instantly when gas exceeds threshold
+* Telegram notification sent to user
+
+### Anti-Spam Alert
+
+Limits alerts to **1 message every 5 seconds**.
+
+### Bidirectional Control via Telegram
+
+User can interact with system using commands:
+
+| Command        | Function                |
+| -------------- | ----------------------- |
+| `/up`          | Increase threshold (+5) |
+| `/down`        | Decrease threshold (-5) |
+| `/set <value>` | Set threshold manually  |
+| `/calibrate`   | Recalibrate sensor      |
+| `/status`      | Show system status      |
+| `/help`        | Show command list       |
+
+---
 
 ## System Workflow
 
@@ -59,9 +83,14 @@ System automatically calibrates baseline value in clean air at startup.
    * Reads sensor value
    * Calculates gas percentage
    * Compares with threshold
-
+   * 
 4. If gas exceeds threshold:
    * Activate LED & Buzzer
+   * Send Telegram alert
+   * 
+5. Telegram bot listens for user commands and updates system accordingly
+
+---
 
 ## Core Algorithm
 
@@ -77,21 +106,29 @@ cleanAirValue = average(100 sensor readings)
 diff = currentValue - cleanAirValue
 ```
 
-## 🔐 Security
+### 3. Normalization
+
+```
+gasPercent = map(diff, 0 → 2000, 0 → 100)
+```
+
+---
+
+## Security
 
 * Only authorized `CHAT_ID` can control the system
 * Prevents unauthorized access to bot commands
 
 ---
 
-## ⏱️ Non-Blocking Architecture
+## Non-Blocking Architecture
 
 * Uses `millis()` instead of `delay()` for network tasks
 * Ensures stable WiFi + real-time sensor reading
 
 ---
 
-## 📱 Telegram Setup
+## Telegram Setup
 
 1. Create bot using **@BotFather**
 2. Get:
@@ -107,7 +144,7 @@ diff = currentValue - cleanAirValue
 
 ---
 
-## ▶️ How to Run
+## How to Run
 
 1. Install required libraries in Arduino IDE
 2. Select board: **ESP32 Dev Module**
@@ -118,7 +155,7 @@ diff = currentValue - cleanAirValue
 
 ---
 
-## 🧪 Testing
+## Testing
 
 * Use lighter gas to simulate leakage
 * Observe:
@@ -129,7 +166,7 @@ diff = currentValue - cleanAirValue
 
 ---
 
-## 📈 Future Improvements
+## Future Improvements
 
 * Add AI-based prediction
 * Integrate multiple sensors (temperature, humidity)
@@ -138,14 +175,14 @@ diff = currentValue - cleanAirValue
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 * Nguyen Hoang Anh
 * Ho Chi Minh City University of Technology
 
 ---
 
-## 📌 Notes
+## Notes
 
 * MQ-2 sensor requires warm-up time for stable readings
 * Ensure proper ventilation when testing with gas
